@@ -1,8 +1,19 @@
 package types
 
+type Mirror struct {
+	Url string `yaml:"url"`
+	BlockedCountries []string `yaml:"blocked_countries"`
+	Down bool
+}
+
+type Country struct {
+	Mirrors []Mirror `yaml:"mirrors"`
+}
+
+type Continent struct {
+	Countries map[string]Country `yaml:",inline"`
+}
+
 type MirrorsYAML struct {
-	Mirrors []struct {
-		Url string `yaml:"url"`
-		Down  bool
-	} `yaml:"mirrors"`
+	Continents map[string]Continent `yaml:"continents"`
 }
