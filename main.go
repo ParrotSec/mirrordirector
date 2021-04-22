@@ -3,13 +3,11 @@ package main
 import (
 	"context"
 	"flag"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
 	"parrot-redirector/types"
 	"path/filepath"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -17,7 +15,6 @@ import (
 )
 
 var mirrorsYAML types.MirrorsYAML
-var filesList []string
 
 var config struct {
 	gracefulExitWait time.Duration
@@ -34,6 +31,8 @@ func init() {
 	}
 	flag.StringVar(&config.repoPath, "repo", path,
 		"path to a repository, set to 'repository' as a default")
+	flag.StringVar(&config.repoPath, "repo", "country.mmdb",
+		"path to country geo database, set to 'country.mmdb' as a default")
 	flag.Parse()
 	mirrorsData, err := os.ReadFile("mirrors.yaml")
 	if err != nil {
@@ -43,11 +42,6 @@ func init() {
 	if err != nil {
 		log.Fatalf("parsing mirrors.yaml error: %v", err)
 	}
-	filesListBytes, err := ioutil.ReadFile("files.list")
-	if err != nil {
-		log.Fatalf("parsing files.list error: %v", err)
-	}
-	filesList = strings.Split(string(filesListBytes), "\n")
 	if _, err := os.Stat(config.repoPath); os.IsNotExist(err) {
 		if err := os.MkdirAll(config.repoPath, 0775); err != nil {
 			log.Fatal(err)
