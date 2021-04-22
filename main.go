@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"parrot-redirector/types"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -21,25 +22,37 @@ var filesList []string
 var config struct {
 	gracefulExitWait time.Duration
 	debug            bool
+	repoPath         string
 }
 
 func init() {
 	flag.DurationVar(&config.gracefulExitWait, "graceful-timeout", time.Second*15,
 		"the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
+	path, err := filepath.Abs("repository")
+	if err != nil {
+		log.Fatal(err)
+	}
+	flag.StringVar(&config.repoPath, "repo", path,
+		"path to a repository, set to 'repository' as a default")
 	flag.Parse()
 	mirrorsData, err := os.ReadFile("mirrors.yaml")
 	if err != nil {
-		log.Error("mirrors.yaml file missing")
+		log.Fatalf("mirrors.yaml file missing")
 	}
 	err = yaml.Unmarshal(mirrorsData, &mirrorsYAML)
 	if err != nil {
-		log.Errorf("parsing mirrors.yaml error: %v", err)
+		log.Fatalf("parsing mirrors.yaml error: %v", err)
 	}
 	filesListBytes, err := ioutil.ReadFile("files.list")
 	if err != nil {
-		log.Errorf("parsing files.list error: %v", err)
+		log.Fatalf("parsing files.list error: %v", err)
 	}
 	filesList = strings.Split(string(filesListBytes), "\n")
+	if _, err := os.Stat(config.repoPath); os.IsNotExist(err) {
+		if err := os.MkdirAll(config.repoPath, 0775); err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 func main() {
@@ -60,6 +73,7 @@ func main() {
 		serverAddr = ":8000"
 	}
 
+	go initWatcher()
 	srv := &http.Server{
 		Addr: serverAddr,
 		// Good practice to set timeouts to avoid Slowloris attacks.

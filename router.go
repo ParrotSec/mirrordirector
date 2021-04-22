@@ -11,7 +11,7 @@ import (
 func Router() http.Handler  {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/files/{filePath}", handlers.NewFilesHandler(mirrorsYAML, filesList)).Methods("GET")
+	r.HandleFunc("/files/{filePath}", handlers.NewFilesHandler(mirrorsYAML, &repository)).Methods("GET")
 
 	loggedHandler := LoggingHandler(log.New().Writer(), r)
 

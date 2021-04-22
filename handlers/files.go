@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/oschwald/geoip2-golang"
 	log "github.com/sirupsen/logrus"
@@ -10,6 +11,23 @@ import (
 	"net/url"
 	"parrot-redirector/types"
 )
+
+const CloudflareMirror = "https://mirror.parrot.sh/mirrors/parrot"
+
+func resolveLink(basePath string, postfixPath string) (string, error) {
+	base, err := url.Parse(basePath)
+	if err != nil {
+		return "", fmt.Errorf("error parsing base URL: %v", err)
+	}
+
+	postfix, err := url.Parse(base.Path + "/" + postfixPath)
+	if err != nil {
+		return "", fmt.Errorf("error parsing postfix URL: %v", err)
+	}
+
+	fileLink := base.ResolveReference(postfix).String()
+	return fileLink, nil
+}
 
 // returns first mirror link which satisfies file request
 func fileCheck(mirrors []types.Mirror, filePath string, userCountryCode string) (string, error) {
@@ -27,19 +45,12 @@ func fileCheck(mirrors []types.Mirror, filePath string, userCountryCode string) 
 			continue
 		}
 
-		base, err := url.Parse(value.Url)
+		fileLink, err := resolveLink(value.Url, filePath)
 		if err != nil {
-			log.Errorf("error parsing base URL: %v", err)
+			log.Errorf("error resolving link: %v", err)
 			continue
 		}
 
-		postfix, err := url.Parse(base.Path + "/" + filePath)
-		if err != nil {
-			log.Errorf("error parsing postfix URL: %v", err)
-			continue
-		}
-
-		fileLink := base.ResolveReference(postfix).String()
 		resp, err := http.Head(fileLink)
 		if err != nil {
 			log.Errorf("error initiating HEAD request: %v", err)
@@ -56,7 +67,7 @@ func fileCheck(mirrors []types.Mirror, filePath string, userCountryCode string) 
 }
 
 // Route which redirects to a closest mirror
-func NewFilesHandler(m types.MirrorsYAML, filesList []string) func(w http.ResponseWriter, r *http.Request) {
+func NewFilesHandler(m types.MirrorsYAML, filesList *[]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// performing a sync health check sorted by speed
 		db, err := geoip2.Open("country.mmdb")
@@ -86,13 +97,12 @@ func NewFilesHandler(m types.MirrorsYAML, filesList []string) func(w http.Respon
 
 		// checking if file should be in the repo
 		found := false
-		for _, f := range filesList {
+		for _, f := range *filesList {
 			if f == vars["filePath"] {
 				found = true
 				break
 			}
 		}
-		log.Print(dbResult.Continent.Code)
 
 		if !found {
 			w.WriteHeader(http.StatusNotFound)
@@ -138,16 +148,21 @@ func NewFilesHandler(m types.MirrorsYAML, filesList []string) func(w http.Respon
 					}
 
 					if finalLink == "" {
-						// TODO: redirect do other CDN
-						log.Warnf("user %s:%s could not find a file %s on any mirror", userContinent, userCountry, vars["filePath"])
-						w.WriteHeader(http.StatusNotFound)
-						return
+						finalLink, err = resolveLink(CloudflareMirror, vars["filePath"])
+						if err != nil {
+							log.Error(err)
+							w.WriteHeader(http.StatusInternalServerError)
+							return
+						}
+						log.Warnf("user %s:%s could not find a file %s on any mirror, redirected to cloudflare",
+							userContinent, userCountry, vars["filePath"])
 					}
 				}
 			} else {
 				// fallback to other continents, choosing random country
 				for countryCode, _ := range m.Continents[userContinent].Countries {
-					if finalLink, err = fileCheck(m.Continents[userContinent].Countries[countryCode].Mirrors[:], vars["filePath"], userCountry); err == nil {
+					if finalLink, err = fileCheck(m.Continents[userContinent].Countries[countryCode].Mirrors[:],
+						vars["filePath"], userCountry); err == nil {
 						break
 					}
 				}
@@ -172,10 +187,14 @@ func NewFilesHandler(m types.MirrorsYAML, filesList []string) func(w http.Respon
 				}
 
 				if finalLink == "" {
-					// TODO: redirect do other CDN
-					log.Warnf("user %s:%s could not find a file %s on any mirror", userContinent, userCountry, vars["filePath"])
-					w.WriteHeader(http.StatusNotFound)
-					return
+					finalLink, err = resolveLink(CloudflareMirror, vars["filePath"])
+					if err != nil {
+						log.Error(err)
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+					log.Warnf("user %s:%s could not find a file %s on any mirror, redirected to cloudflare",
+						userContinent, userCountry, vars["filePath"])
 				}
 			}
 		} else {
@@ -192,10 +211,14 @@ func NewFilesHandler(m types.MirrorsYAML, filesList []string) func(w http.Respon
 			}
 
 			if finalLink == "" {
-				// TODO: redirect do other CDN
-				log.Warnf("user %s:%s could not find a file %s on any mirror", userContinent, userCountry, vars["filePath"])
-				w.WriteHeader(http.StatusNotFound)
-				return
+				finalLink, err = resolveLink(CloudflareMirror, vars["filePath"])
+				if err != nil {
+					log.Error(err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				log.Warnf("user %s:%s could not find a file %s on any mirror, redirected to cloudflare",
+					userContinent, userCountry, vars["filePath"])
 			}
 		}
 
