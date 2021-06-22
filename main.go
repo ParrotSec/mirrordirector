@@ -20,6 +20,7 @@ var config struct {
 	gracefulExitWait time.Duration
 	debug            bool
 	repoPath         string
+        db               string
 }
 
 func init() {
@@ -31,7 +32,7 @@ func init() {
 	}
 	flag.StringVar(&config.repoPath, "repo", path,
 		"path to a repository, set to 'repository' as a default")
-	flag.StringVar(&config.repoPath, "repo", "country.mmdb",
+	flag.StringVar(&config.db, "db", "country.mmdb",
 		"path to country geo database, set to 'country.mmdb' as a default")
 	flag.Parse()
 	mirrorsData, err := os.ReadFile("mirrors.yaml")
