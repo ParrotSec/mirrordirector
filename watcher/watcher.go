@@ -1,16 +1,16 @@
-package main
+package watcher
 
 import (
 	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
 	"io/fs"
 	"os"
+	"parrot-redirector/db"
+	"parrot-redirector/handlers"
 	"path/filepath"
 )
 
-var repository []string
-
-func initWatcher() {
+func InitWatcher(repoPath string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
@@ -18,13 +18,10 @@ func initWatcher() {
 	defer watcher.Close()
 
 	// recursive watch init
-	err = filepath.Walk(config.repoPath, func(path string, info fs.FileInfo, err error) error {
-		relPath, relErr := filepath.Rel(config.repoPath, path)
+	err = filepath.Walk(repoPath, func(path string, info fs.FileInfo, err error) error {
+		relPath, relErr := filepath.Rel(repoPath, path)
 		if relErr != nil {
 			return relErr
-		}
-		if relPath != "." {
-			repository = append(repository, relPath)
 		}
 		if err != nil {
 			log.Errorf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
@@ -35,6 +32,8 @@ func initWatcher() {
 			if err != nil {
 				log.Error(err)
 			}
+		} else {
+			db.Cache.AddFile(relPath)
 		}
 		log.Infof("visited file or dir: %q\n", path)
 		return nil
@@ -49,13 +48,15 @@ func initWatcher() {
 				return
 			}
 			log.Println("event:", event)
-			relPath, err := filepath.Rel(config.repoPath, event.Name)
+			relPath, err := filepath.Rel(repoPath, event.Name)
 			if err != nil {
 				log.Fatal(err)
 			}
 			if event.Op & fsnotify.Create == fsnotify.Create {
-				repository = append(repository, relPath)
-
+				db.Cache.AddFile(relPath)
+				for countryCode := range handlers.SyncPoint {
+					handlers.SyncPoint[countryCode][relPath] = false
+				}
 				if info, err := os.Stat(event.Name); err == nil {
 					if info.IsDir() {
 						if err := watcher.Add(event.Name); err != nil {
@@ -67,12 +68,9 @@ func initWatcher() {
 				}
 			}
 			if event.Op & fsnotify.Remove == fsnotify.Remove {
-				for i, p := range repository {
-					if p == relPath {
-						repository[i] = repository[len(repository) - 1]
-						repository = repository[:len(repository) - 1]
-						break
-					}
+				db.Cache.RemoveFile(relPath)
+				for countryCode := range handlers.SyncPoint {
+					delete(handlers.SyncPoint[countryCode], relPath)
 				}
 			}
 			if event.Op & fsnotify.Write == fsnotify.Write {

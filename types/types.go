@@ -1,6 +1,7 @@
 package types
 
 type Mirror struct {
+	Name string `yaml:"name"`
 	Url string `yaml:"url"`
 	BlockedCountries []string `yaml:"blocked_countries"`
 	Down bool
