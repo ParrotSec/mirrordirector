@@ -12,7 +12,9 @@ import (
 func Router(geoDB *geoip2.Reader) http.Handler  {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/files/{filePath}", handlers.NewFilesHandler(mirrorsYAML,
+	r.HandleFunc("/files/{filePath:.*}", handlers.
+		NewFilesHandler(
+		mirrorsYAML,
 		geoDB)).Methods("GET")
 
 	loggedHandler := LoggingHandler(log.New().Writer(), r)
