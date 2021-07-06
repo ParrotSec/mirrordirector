@@ -7,9 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"predir/mirrors"
 	"strconv"
 	"strings"
+
+	"github.com/parrotsec/mirrordirector/mirrors"
 )
 
 type File struct {

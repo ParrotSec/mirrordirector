@@ -1,10 +1,11 @@
 package main
 
 import (
-	"predir/files"
-	"predir/mirrors"
-	"predir/server"
 	"time"
+
+	"github.com/parrotsec/mirrordirector/files"
+	"github.com/parrotsec/mirrordirector/mirrors"
+	"github.com/parrotsec/mirrordirector/server"
 )
 
 func main() {

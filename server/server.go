@@ -5,9 +5,10 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"predir/files"
-	"predir/mirrors"
 	"strings"
+
+	"github.com/parrotsec/mirrordirector/files"
+	"github.com/parrotsec/mirrordirector/mirrors"
 
 	"github.com/oschwald/geoip2-golang"
 )

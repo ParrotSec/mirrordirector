@@ -1,4 +1,4 @@
-module predir
+module github.com/parrotsec/mirrordirector
 
 go 1.16
 
