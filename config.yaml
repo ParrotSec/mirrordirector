@@ -1,0 +1,33 @@
+continents:
+  MASTER:
+    MASTER:
+      mirrors:
+        - name: "Master"
+          url: "https://palinuro.eu-central-1.linodeobjects.com/mirrortest"
+          version: 1
+          down: true
+  EU:
+    DE:
+      mirrors:
+        - name: 'linode-frankfurt'
+          url: 'https://cdn.palinuro.dev/mirrortest'
+          version: 1
+          down: true
+        - name: 'linode-invalid'
+          url: 'https://palinuro.eu-central-2.linodeobjects.com/mirrortest'
+          version: 1
+          down: true
+  NA:
+    US:
+      mirrors:
+        - name: 'linode-newyork'
+          url: 'https://palinuro.us-east-1.linodeobjects.com/mirrortest'
+          version: 1
+          down: true
+  AS:
+    SG:
+      mirrors:
+        - name: 'linode-singapore'
+          url: 'https://palinuro.ap-south-1.linodeobjects.com/mirrortest'
+          version: 1
+          down: true

@@ -1,5 +1,3 @@
 .idea/
-repository/*
-parrot-redirector
 .DS_STORE
 cache.db
