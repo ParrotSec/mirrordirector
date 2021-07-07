@@ -16,6 +16,7 @@ import (
 type Mirror struct {
 	Name             string   `yaml:"name"`
 	Url              string   `yaml:"url"`
+	Index            string   `yaml:"index"`
 	BlockedCountries []string `yaml:"blocked_countries"`
 	Down             bool     `yaml:"down"`
 	Version          uint64   `yaml:"version"`
@@ -119,7 +120,7 @@ func (R *Root) Scan() {
 }
 
 func (M *Mirror) Scan() error {
-	resp, err := http.Get(M.Url + "/index.db")
+	resp, err := http.Get(M.Url + "/" + M.Index)
 	if err != nil {
 		log.Printf("[WARNING] Unable to get index from %s: %v\n", M.Name, err)
 		M.Down = true
