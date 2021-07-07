@@ -53,14 +53,13 @@ func (R Root) Show() {
 	for k, e := range R.Continents {
 		for l, f := range e.Countries {
 			for _, g := range f.Mirrors {
-				fmt.Printf("%s/%s/%s: %s version: %d, down: %v\n", k, l, g.Name, g.Url, g.Version, g.Down)
+				log.Printf("%s/%s/%s: %s version: %d, down: %v\n", k, l, g.Name, g.Url, g.Version, g.Down)
 			}
 		}
 	}
 }
 
 func (R Root) Lookup(file string, version uint64, continent string, country string) Mirror {
-	fmt.Printf("Lookup( %s, %d, %s, %s )\n", file, version, continent, country)
 	if ct, ctok := R.Continents[continent]; ctok {
 		if co, cook := ct.Countries[country]; cook {
 			// if country has a mirror
@@ -83,7 +82,6 @@ func (R Root) Lookup(file string, version uint64, continent string, country stri
 		// if country has no mirrors and continent has no DEFAULT mirrors
 		for _, co := range ct.Countries {
 			// pick a random mirror casually from an available country
-			fmt.Println(co.Mirrors)
 			mirror := co.Mirrors[rand.Intn(len(co.Mirrors))]
 			if !mirror.Down {
 				if mirror.Version >= version {
@@ -109,25 +107,21 @@ func (R Root) Lookup(file string, version uint64, continent string, country stri
 	)]
 }
 
-func (R *Root) Scan() error {
+func (R *Root) Scan() {
 	for continentName, continent := range R.Continents {
 		for countryName, country := range continent.Countries {
 			for mcount, mirror := range country.Mirrors {
-				log.Printf("Scanning %s [%s/%s}", mirror.Name, continentName, countryName)
-				err := R.Continents[continentName].Countries[countryName].Mirrors[mcount].Scan()
-				if err != nil {
-					log.Printf("%s [%s/%s} scan failed: %v\n", mirror.Name, continentName, countryName, err)
-				}
+				log.Printf("[SCANNING] %s/%s/%s: %s version: %d, down: %v\n", continentName, countryName, mirror.Name, mirror.Url, mirror.Version, mirror.Down)
+				R.Continents[continentName].Countries[countryName].Mirrors[mcount].Scan()
 			}
 		}
 	}
-	return nil
 }
 
 func (M *Mirror) Scan() error {
 	resp, err := http.Get(M.Url + "/index.db")
 	if err != nil {
-		log.Printf("Unable to get index from %s: %v\n", M.Name, err)
+		log.Printf("[WARNING] Unable to get index from %s: %v\n", M.Name, err)
 		M.Down = true
 		return fmt.Errorf("unable to get index from %s: %v", M.Name, err)
 	}
@@ -135,13 +129,13 @@ func (M *Mirror) Scan() error {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Unable to get index from %s: %v", M.Name, err)
+		log.Printf("[WARNING] Unable to get index from %s: %v", M.Name, err)
 		M.Down = true
 		return fmt.Errorf("unable to get index from %s: %v", M.Name, err)
 	}
 
 	if !strings.Contains(string(body), "!version") {
-		log.Printf("Got invalid index from %s: version string not found\n", M.Name)
+		log.Printf("[WARNING] Got invalid index from %s: version string not found\n", M.Name)
 		M.Down = true
 		return fmt.Errorf("got invalid index from %s: version string not found", M.Name)
 	}
@@ -149,7 +143,7 @@ func (M *Mirror) Scan() error {
 	lines := strings.Split(strings.TrimSpace(string(body)), "\n")
 	version, err := strconv.ParseUint(strings.Split(lines[0], " ")[1], 10, 64)
 	if err != nil {
-		log.Printf("Got invalid version from index while scanning %s\n", M.Name)
+		log.Printf("[WARNING] Got invalid version from index while scanning %s\n", M.Name)
 		M.Down = true
 		return fmt.Errorf("got invalid version from index while scanning %s", M.Name)
 	}

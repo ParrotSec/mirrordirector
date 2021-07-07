@@ -44,7 +44,7 @@ func Handler(mmdb *geoip2.Reader, Fileset files.Fileset, Root mirrors.Root) http
 		ip := net.ParseIP(GetIP(r))
 		continent, country := GetLocation(mmdb, ip)
 		target := Root.Lookup(file.Uri, file.Version, continent, country)
-		fmt.Printf("file: %s %d, mirror: %v\n", file.Uri, file.Version, target)
+		log.Printf("|%s|%s|%s|%s|%s|%s|%d\n", ip.String(), continent, country, target.Name, target.Url, file.Uri, file.Version)
 		http.Redirect(w, r, target.Url+file.Uri, http.StatusTemporaryRedirect)
 		fmt.Fprintf(w, "file: %v\nsource: %s\nlocation: %s %s\n", file, ip, continent, country)
 	}
