@@ -17,14 +17,14 @@ func main() {
 	Root.Show()
 
 	Fileset := files.Init(Root, cache)
-	Fileset.ScanMaster(Root)
-	Fileset.SaveCache(cache)
 
 	go func(F *files.Fileset, R *mirrors.Root) {
 		for {
+			F.ScanMaster(*R)
+			F.SaveCache(cache)
 			R.Scan()
 			R.Show()
-			time.Sleep(time.Minute * 5)
+			time.Sleep(time.Minute * 20)
 		}
 	}(&Fileset, &Root)
 
