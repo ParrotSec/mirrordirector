@@ -22,6 +22,8 @@ func main() {
 
 	go func(F *files.Fileset, R *mirrors.Root) {
 		for {
+			F.ScanMaster(Root)
+			F.SaveCache(cache)
 			R.Scan()
 			R.Show()
 			time.Sleep(time.Minute * 5)
