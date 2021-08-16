@@ -20,15 +20,11 @@ func main() {
 
 	go func(F *files.Fileset, R *mirrors.Root) {
 		for {
-<<<<<<< HEAD
-			F.ScanMaster(Root)
-=======
 			F.ScanMaster(*R)
->>>>>>> fa9c1a66807b71864f1f5ee9d42a0053f1d3f5b9
 			F.SaveCache(cache)
 			R.Scan()
 			R.Show()
-			time.Sleep(time.Minute * 20)
+			time.Sleep(time.Minute * 10)
 		}
 	}(&Fileset, &Root)
 
