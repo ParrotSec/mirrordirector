@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"strings"
@@ -38,7 +39,9 @@ func Handler(mmdb *geoip2.Reader, Fileset files.Fileset, Root mirrors.Root) http
 		file, err := Fileset.Lookup(strings.TrimSpace(r.URL.Path))
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintf(w, "404 file not found")
+			http.Redirect(w, r, Root.Continents["MASTER"].Countries["MASTER"].Mirrors[rand.Intn(
+				len(Root.Continents["MASTER"].Countries["MASTER"].Mirrors),
+			)].Url+file.Uri, http.StatusTemporaryRedirect)
 			return
 		}
 		ip := net.ParseIP(GetIP(r))
