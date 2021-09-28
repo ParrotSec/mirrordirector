@@ -38,7 +38,7 @@ func Handler(mmdb *geoip2.Reader, Fileset files.Fileset, Root mirrors.Root) http
 		}
 		file, err := Fileset.Lookup(strings.TrimSpace(r.URL.Path))
 		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
+			//w.WriteHeader(http.StatusNotFound)
 			http.Redirect(w, r, Root.Continents["MASTER"].Countries["MASTER"].Mirrors[rand.Intn(
 				len(Root.Continents["MASTER"].Countries["MASTER"].Mirrors),
 			)].Url+file.Uri, http.StatusTemporaryRedirect)
