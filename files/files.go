@@ -46,6 +46,7 @@ func (f Fileset) Lookup(file string) (File, error) {
 }
 
 func (F *Fileset) ScanMaster(R mirrors.Root) error {
+	// download index
 	resp, err := http.Get(R.Continents["MASTER"].Countries["MASTER"].Mirrors[0].Url + "/index.db")
 	if err != nil {
 		log.Printf("Unable to get index from master repo: %v\n", err)
@@ -53,17 +54,20 @@ func (F *Fileset) ScanMaster(R mirrors.Root) error {
 	}
 	defer resp.Body.Close()
 
+	// read body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Unable to get index from master repo: %v\n", err)
 		return fmt.Errorf("unable to get index from master repo: %v", err)
 	}
 
+	// extract index version
 	if !strings.Contains(string(body), "!version") {
 		log.Printf("Got invalid index from master repo: version string not found\n")
 		return fmt.Errorf("got invalid index from master repo: version string not found")
 	}
 
+	// parse files available
 	lines := strings.Split(strings.TrimSpace(string(body)), "\n")
 	version, err := strconv.ParseUint(strings.Split(lines[0], " ")[1], 10, 64)
 	if err != nil {
@@ -71,6 +75,7 @@ func (F *Fileset) ScanMaster(R mirrors.Root) error {
 		return fmt.Errorf("got invalid version from index while scanning master repo")
 	}
 
+	// save files and versions in F.Files structure
 	for _, ii := range lines[1:] {
 		if _, ok := F.Files[ii]; !ok {
 			F.Files[ii] = File{Uri: ii, Version: version}

@@ -24,7 +24,7 @@ func main() {
 			F.SaveCache(cache)
 			R.Scan()
 			R.Show()
-			time.Sleep(time.Minute * 10)
+			time.Sleep(time.Minute * 20)
 		}
 	}(&Fileset, &Root)
 
