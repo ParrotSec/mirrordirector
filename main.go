@@ -11,8 +11,8 @@ import (
 
 func main() {
 	time.Now().UTC().UnixNano()
-	config := "config.yaml"
-	cache := "cache.db"
+	config := "/director/config/config.yaml"
+	cache := "/director/data/cache.db"
 	Root := mirrors.Init(config)
 	Root.Show()
 
