@@ -64,6 +64,12 @@ func (R Root) Lookup(file string, version uint64, continent string, country stri
 	if ct, ctok := R.Continents[continent]; ctok {
 		if co, cook := ct.Countries[country]; cook {
 			// if country has a mirror
+			// TODO: create a slice and append all the mirrors
+			//       from the country and all the mirrors from
+			//       ct.Countries["DEFAULT"], and randomly pick one
+			//
+			// TODO: find a way to weight mirror redirection
+			//       based on available bandwidth
 			mirror := co.Mirrors[rand.Intn(len(co.Mirrors))]
 			if !mirror.Down {
 				if mirror.Version >= version {
@@ -80,16 +86,17 @@ func (R Root) Lookup(file string, version uint64, continent string, country stri
 				}
 			}
 		}
-		// if country has no mirrors and continent has no DEFAULT mirrors
-		for _, co := range ct.Countries {
-			// pick a random mirror casually from an available country
-			mirror := co.Mirrors[rand.Intn(len(co.Mirrors))]
-			if !mirror.Down {
-				if mirror.Version >= version {
-					return mirror
-				}
-			}
-		}
+		// TODO: chech whether it can be removed
+		//// if country has no mirrors and continent has no DEFAULT mirrors
+		//for _, co := range ct.Countries {
+		//	// pick a random mirror casually from an available country
+		//	mirror := co.Mirrors[rand.Intn(len(co.Mirrors))]
+		//	if !mirror.Down {
+		//		if mirror.Version >= version {
+		//			return mirror
+		//		}
+		//	}
+		//}
 	}
 	// if there are no mirrors in the continent
 	if ct, ctok := R.Continents["DEFAULT"]; ctok {
