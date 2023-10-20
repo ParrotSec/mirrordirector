@@ -1,0 +1,9 @@
+services:
+  mirror-director:
+    build: .
+    ports:
+      - "8070:8080" # Port Exposed for HTTP, container port is 8080
+    volumes:
+      - ./config:/app/config
+      - ./cache:/app/data
+      - ./GeoLite2-City.mmdb:/var/lib/GeoIP/GeoLite2-City.mmdb
