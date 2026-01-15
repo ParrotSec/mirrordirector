@@ -36,7 +36,9 @@ func Handler(mmdb *geoip2.Reader, Fileset files.Fileset, Root mirrors.Root) http
 			fmt.Fprintf(w, "400 bad request")
 			return
 		}
-		file, err := Fileset.Lookup(strings.TrimSpace(r.URL.Path))
+		// comment section as it redirects to master if the redirector
+		// is not run on a mirror and fails file lookup
+		/*file, err := Fileset.Lookup(strings.TrimSpace(r.URL.Path))
 		if err != nil {
 			//w.WriteHeader(http.StatusNotFound)
 			http.Redirect(w, r, Root.Continents["MASTER"].Countries["MASTER"].Mirrors[rand.Intn(
@@ -44,7 +46,7 @@ func Handler(mmdb *geoip2.Reader, Fileset files.Fileset, Root mirrors.Root) http
 			)].Url+strings.TrimSpace(r.URL.Path), http.StatusTemporaryRedirect)
 			fmt.Fprintf(w, "Directing to Master - Cannot find match")
 			return
-		}
+		}*/
 		ip := net.ParseIP(GetIP(r))
 		continent, country := GetLocation(mmdb, ip)
 		target := Root.Lookup(file.Uri, file.Version, continent, country)
