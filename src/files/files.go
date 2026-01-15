@@ -47,7 +47,7 @@ func (f Fileset) Lookup(file string) (File, error) {
 
 func (F *Fileset) ScanMaster(R mirrors.Root) error {
 	// download index
-	resp, err := http.Get(R.Continents["MASTER"].Countries["MASTER"].Mirrors[0].Url + "/index.db")
+	resp, err := http.Get(R.Continents["MASTER"].Countries["MASTER"].Mirrors[0].Url + "/misc/index.db")
 	if err != nil {
 		log.Printf("Unable to get index from master repo: %v\n", err)
 		return fmt.Errorf("unable to get index from master repo: %v", err)
