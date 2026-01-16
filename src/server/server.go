@@ -17,7 +17,7 @@ import (
 func Serve(url string, Fileset files.Fileset, Root mirrors.Root) {
 	mmdb, err := geoip2.Open("/var/lib/GeoIP/GeoLite2-City.mmdb")
 	if err != nil {
-		log.Print(err)
+		log.Panic(err)
 	}
 	defer mmdb.Close()
 
