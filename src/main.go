@@ -35,7 +35,7 @@ func initGeoIP() {
 	}
 	*/
 	fmt.Println("Running geoipupdate...")
-	cmd := exec.Command("wget https://deb.parrot.sh/direct/parrot/misc/.geoip/GeoLite2-City.mmdb -o /var/lib/GeoIP/GeoLite2-City.mmdb")
+	cmd := exec.Command("wget", "https://deb.parrot.sh/direct/parrot/misc/.geoip/GeoLite2-City.mmdb", "-O", "/var/lib/GeoIP/GeoLite2-City.mmdb")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
