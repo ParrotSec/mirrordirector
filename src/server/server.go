@@ -59,10 +59,25 @@ func GetIP(r *http.Request) string {
 	if forwarded != "" {
 		return forwarded
 	}
+	forwarded = r.Header.Get("X-Forwarded-For")
+	if forwarded != "" {
+		return forwarded
+	}
+	forwarded = r.Header.Get("X-REAL-IP")
+	if forwarded != "" {
+		return forwarded
+	}
+	forwarded = r.Header.Get("X-Real-Ip")
+	if forwarded != "" {
+		return forwarded
+	}
 	return strings.Split(r.RemoteAddr, ":")[0]
 }
 
 func GetLocation(mmdb *geoip2.Reader, ip net.IP) (string, string) {
+	if mmdb == nil {
+		return "DEFAULT", "DEFAULT"
+	}
 	mmrecord, err := mmdb.City(ip)
 	if err != nil {
 		log.Print(err)
