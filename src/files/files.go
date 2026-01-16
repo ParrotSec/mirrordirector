@@ -24,7 +24,7 @@ type Fileset struct {
 
 func Init(R mirrors.Root, cache string) Fileset {
 	var F Fileset
-	F.Files = make(map[string]File, 500)
+	F.Files = make(map[string]File, 5000)
 	F.LoadCache(cache)
 	F.ScanMaster(R)
 	F.SaveCache(cache)
