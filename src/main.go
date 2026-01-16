@@ -48,7 +48,7 @@ func initGeoIP() {
 func main() {
 	initGeoIP()
 	time.Now().UTC().UnixNano()
-	config := "/app/config/config.yaml"
+	config := "https://deb.parrot.sh/parrot/misc/director/config.yaml"
 	cache := "/app/data/cache.db"
 	Root := mirrors.Init(config)
 	Root.Show()
