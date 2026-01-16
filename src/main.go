@@ -36,19 +36,19 @@ func initGeoIP() {
 	}
 
 	fmt.Println("Running geoipupdate...")
-	cmd := exec.Command("geoipupdate")
+	cmd := exec.Command("wget https://deb.parrot.sh/direct/parrot/misc/.geoip/GeoLite2-City.mmdb -o /var/lib/GeoIP/GeoLite2-City.mmdb")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		fmt.Printf("Error running geoipupdate: %v\n", err)
+		fmt.Printf("Error downloading GeoIP database: %v\n", err)
 	}
 }
 
 func main() {
 	initGeoIP()
 	time.Now().UTC().UnixNano()
-	config := "https://deb.parrot.sh/parrot/misc/director/config.yaml"
+	config := "https://deb.parrot.sh/direct/parrot/misc/director/config.yaml"
 	cache := "/app/data/cache.db"
 	Root := mirrors.Init(config)
 	Root.Show()
