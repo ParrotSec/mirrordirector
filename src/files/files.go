@@ -32,6 +32,10 @@ func Init(R mirrors.Root, cache string) Fileset {
 	return F
 }
 
+func (F *Fileset) UpdateConfig(config string, R *mirrors.Root) {
+	R.Reload(config)
+}
+
 func (F Fileset) Show() {
 	for _, ii := range F.Files {
 		fmt.Printf("%s %d\n", ii.Uri, ii.Version)

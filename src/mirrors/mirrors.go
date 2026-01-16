@@ -14,9 +14,9 @@ import (
 )
 
 type Mirror struct {
-	Name             string   `yaml:"name"`
-	Url              string   `yaml:"url"`
-//	Index            string   `yaml:"index"`
+	Name string `yaml:"name"`
+	Url  string `yaml:"url"`
+	//	Index            string   `yaml:"index"`
 	BlockedCountries []string `yaml:"blocked_countries"`
 	Down             bool     `yaml:"down"`
 	Version          uint64   `yaml:"version"`
@@ -36,10 +36,24 @@ type Root struct {
 
 func Init(config string) Root {
 	var R Root
+	var mraw []byte
+	var err error
 
-	mraw, err := os.ReadFile(config)
-	if err != nil {
-		log.Fatalf("%s file missing", config)
+	if strings.HasPrefix(config, "http://") || strings.HasPrefix(config, "https://") {
+		resp, err := http.Get(config)
+		if err != nil {
+			log.Fatalf("fetching %s error: %v", config, err)
+		}
+		defer resp.Body.Close()
+		mraw, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalf("reading %s response error: %v", config, err)
+		}
+	} else {
+		mraw, err = os.ReadFile(config)
+		if err != nil {
+			log.Fatalf("%s file missing", config)
+		}
 	}
 
 	err = yaml.Unmarshal(mraw, &R)
@@ -48,6 +62,37 @@ func Init(config string) Root {
 	}
 
 	return R
+}
+
+func (R *Root) Reload(config string) {
+	var mraw []byte
+	var err error
+
+	if strings.HasPrefix(config, "http://") || strings.HasPrefix(config, "https://") {
+		resp, err := http.Get(config)
+		if err != nil {
+			log.Printf("fetching %s error: %v", config, err)
+			return
+		}
+		defer resp.Body.Close()
+		mraw, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("reading %s response error: %v", config, err)
+			return
+		}
+	} else {
+		mraw, err = os.ReadFile(config)
+		if err != nil {
+			log.Printf("%s file missing", config)
+			return
+		}
+	}
+
+	err = yaml.Unmarshal(mraw, R)
+	if err != nil {
+		log.Printf("parsing %s error: %v", config, err)
+		return
+	}
 }
 
 func (R Root) Show() {
@@ -127,7 +172,7 @@ func (R *Root) Scan() {
 }
 
 func (M *Mirror) Scan() error {
-	resp, err := http.Get(M.Url + "/misc/vindex.db" )
+	resp, err := http.Get(M.Url + "/misc/vindex.db")
 	if err != nil {
 		log.Printf("[WARNING] Unable to get index from %s: %v\n", M.Name, err)
 		M.Down = true

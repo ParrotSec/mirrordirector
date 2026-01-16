@@ -14,7 +14,7 @@ import (
 	"github.com/oschwald/geoip2-golang"
 )
 
-func Serve(url string, Fileset files.Fileset, Root mirrors.Root) {
+func Serve(url string, Fileset *files.Fileset, Root *mirrors.Root) {
 	mmdb, err := geoip2.Open("/var/lib/GeoIP/GeoLite2-City.mmdb")
 	if err != nil {
 		log.Panic(err)
@@ -29,7 +29,7 @@ func Serve(url string, Fileset files.Fileset, Root mirrors.Root) {
 	}
 }
 
-func Handler(mmdb *geoip2.Reader, Fileset files.Fileset, Root mirrors.Root) http.HandlerFunc {
+func Handler(mmdb *geoip2.Reader, Fileset *files.Fileset, Root *mirrors.Root) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" && r.Method != "HEAD" {
 			w.WriteHeader(http.StatusBadRequest)
