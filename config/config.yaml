@@ -59,7 +59,7 @@ continents:
     DE:
       mirrors:
         - name: 'geo.rfc2549'
-        - url: 'https://frankfurt.mirror.rfc2549.network'
+          url: 'https://frankfurt.mirror.rfc2549.network'
         - name: 'emea.esslingen'
           url: 'https://ftp-stud.hs-esslingen.de/Mirrors/archive.parrotsec.org'
         - name: 'emea.pyratelan'
