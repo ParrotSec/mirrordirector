@@ -9,9 +9,15 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
+
+// client is used to scan the mirrors and fetch the remote config:
+// it must have a timeout, a stuck mirror would otherwise stall the
+// whole rescan loop forever
+var client = &http.Client{Timeout: time.Second * 10}
 
 type Mirror struct {
 	Name string `yaml:"name"`
@@ -40,7 +46,7 @@ func Init(config string) Root {
 	var err error
 
 	if strings.HasPrefix(config, "http://") || strings.HasPrefix(config, "https://") {
-		resp, err := http.Get(config)
+		resp, err := client.Get(config)
 		if err != nil {
 			log.Fatalf("fetching %s error: %v", config, err)
 		}
@@ -88,7 +94,7 @@ func (R *Root) Reload(config string) {
 	var err error
 
 	if strings.HasPrefix(config, "http://") || strings.HasPrefix(config, "https://") {
-		resp, err := http.Get(config)
+		resp, err := client.Get(config)
 		if err != nil {
 			log.Printf("fetching %s error: %v", config, err)
 			return
@@ -188,7 +194,7 @@ func (R *Root) Scan() {
 }
 
 func (M *Mirror) Scan() error {
-	resp, err := http.Get(M.Url + "/misc/vindex.db")
+	resp, err := client.Get(M.Url + "/misc/vindex.db")
 	if err != nil {
 		log.Printf("[WARNING] Unable to get index from %s: %v\n", M.Name, err)
 		M.Down = true
