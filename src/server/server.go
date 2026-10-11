@@ -36,12 +36,19 @@ func Handler(mmdb *geoip2.Reader, Fileset *files.Fileset, Root *mirrors.Root) ht
 			fmt.Fprintf(w, "400 bad request")
 			return
 		}
+		// The redirect target must keep the request path in its original
+		// escaped form (r.URL.EscapedPath), not the decoded r.URL.Path:
+		// apt percent-encodes characters like '+' in the URIs it queues
+		// (e.g. foo_1.0+dfsg-1 becomes foo_1.0%2bdfsg-1), and it only
+		// updates the mirror name it displays when the redirect Location
+		// ends with the exact same path tail as the queued URI.
+		requestPath := r.URL.EscapedPath()
 		file, err := Fileset.Lookup(strings.TrimSpace(r.URL.Path))
 		if err != nil {
 			//w.WriteHeader(http.StatusNotFound)
 			http.Redirect(w, r, Root.Continents["MASTER"].Countries["MASTER"].Mirrors[rand.Intn(
 				len(Root.Continents["MASTER"].Countries["MASTER"].Mirrors),
-			)].Url+strings.TrimSpace(r.URL.Path), http.StatusTemporaryRedirect)
+			)].Url+requestPath, http.StatusTemporaryRedirect)
 			fmt.Fprintf(w, "Directing to Master - Cannot find match")
 			return
 		}
@@ -49,7 +56,7 @@ func Handler(mmdb *geoip2.Reader, Fileset *files.Fileset, Root *mirrors.Root) ht
 		continent, country := GetLocation(mmdb, ip)
 		target := Root.Lookup(file.Uri, file.Version, continent, country)
 		log.Printf("|%s|%s|%s|%s|%s|%s|%d\n", ip.String(), continent, country, target.Name, target.Url, file.Uri, file.Version)
-		http.Redirect(w, r, target.Url+file.Uri, http.StatusTemporaryRedirect)
+		http.Redirect(w, r, target.Url+requestPath, http.StatusTemporaryRedirect)
 		fmt.Fprintf(w, "file: %v\nsource: %s\nlocation: %s %s\n", file, ip, continent, country)
 	}
 }
