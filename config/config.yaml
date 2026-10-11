@@ -1,12 +1,33 @@
+# Mirror director configuration
+#
+# Rebuilt from the official Parrot documentation mirror list
+# (https://www.parrotsec.org/docs/mirrors/mirrors-list/), which is
+# fresher than the remote config served by the master server.
+#
+# Every mirror listed here was probed for a valid repository index
+# (<url>/misc/vindex.db) before inclusion, so ISO-only mirrors and
+# dead/broken entries from the documentation were dropped.
+#
+# Country and continent keys follow the codes the redirector
+# actually sees from GeoLite2: ISO 3166-1 alpha-2 country codes and
+# MaxMind continent codes (EU, NA, SA, AS, OC, AF). Notable mappings:
+#   documentation      redirector
+#   US states       -> US / NA
+#   England         -> GB / EU
+#   Ecuador, Brazil -> EC / SA, BR / SA   (docs merge them into "NCSA")
+#   Russia          -> RU / EU            (MaxMind classifies RU as EU)
+#   Turkey, Iran, Azerbaijan -> TR / AS, IR / AS, AZ / AS
+#                                       (docs merge them into "EMEA")
+
 continents:
   MASTER:
     MASTER:
       mirrors:
         - name: "Master"
           url: "https://deb.parrot.sh/direct/parrot"
-
           version: 9999
           down: false
+
   DEFAULT:
     DEFAULT:
       mirrors:
@@ -14,325 +35,252 @@ continents:
           url: 'https://bunny.deb.parrot.sh/parrot'
         - name: "geo.parrot"
           url: "https://deb.parrot.sh/direct/parrot"
-        - name: 'geo.rfc2549'
-          url: 'https://mirror.rfc2549.network'
+        - name: 'geo.rfc2549.global'
+          url: 'https://mirror.rfc2549.network/direct/parrot'
         - name: 'geo.aliyun'
           url: 'https://mirrors.aliyun.com/parrot/'
 
   EU:
     DEFAULT:
       mirrors:
-        - name: 'geo.bunny'
-          url: 'https://bunny.deb.parrot.sh/parrot'
-        - name: "geo.parrot"
-          url: "https://deb.parrot.sh/direct/parrot"
-        - name: 'geo.rfc2549'
-          url: 'https://mirror.rfc2549.network'
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-        - name: 'emea.esslingen'
-          url: 'https://ftp-stud.hs-esslingen.de/Mirrors/archive.parrotsec.org'
-        - name: 'emea.nluug'
-          url: 'https://ftp.nluug.nl/os/Linux/distr/parrot'
         - name: 'emea.garr'
           url: 'https://parrot.mirror.garr.it/parrot'
-        - name: 'emea.umu'
-          url: 'https://mirror.accum.se/mirror/parrotsec.org/parrot/'
-        - name: 'emea.bahnhof'
-          url: 'https://mirror.bahnhof.net/pub/parrot/'
-        - name: 'emea.belnet'
-          url: 'https://ftp.belnet.be/pub/archive.parrotsec.org'
-        - name: 'emea.dotsrc'
-          url: 'https://mirrors.dotsrc.org/parrot'
-
-    IT:
-      mirrors:
-        - name: 'geo.bunny'
-          url: 'https://bunny.deb.parrot.sh/parrot'
-
-        - name: 'geo.rfc2549'
-          url: 'https://milan.mirror.rfc2549.network'
-
-        - name: 'emea.garr'
-          url: 'https://parrot.mirror.garr.it/parrot'
-
-    DE:
-      mirrors:
-        - name: 'geo.rfc2549'
-          url: 'https://frankfurt.mirror.rfc2549.network'
         - name: 'emea.esslingen'
-          url: 'https://ftp-stud.hs-esslingen.de/Mirrors/archive.parrotsec.org'
-        - name: 'emea.pyratelan'
-          url: 'https://mirror.pyratelan.org/parrot'
-        - name: 'emea.diyarciftci'
-          url: 'https://mirror.diyarciftci.xyz/parrot'
-
-    NL:
-      mirrors:
+          url: 'https://ftp-stud.hs-esslingen.de/pub/Mirrors/archive.parrotsec.org'
         - name: 'emea.nluug'
           url: 'https://ftp.nluug.nl/os/Linux/distr/parrot'
-        - name: 'emea.vulnseeker'
-          url: 'https://mirror.vulnseeker.org/pub/parrot/'
-        - name: 'emea.lyrahosting'
-          url: 'https://mirror.lyrahosting.com/parrot'
-
-    SE:
-      mirrors:
-        - name: 'emea.umu'
+        - name: 'emea.accum'
           url: 'https://mirror.accum.se/mirror/parrotsec.org/parrot'
         - name: 'emea.bahnhof'
           url: 'https://mirror.bahnhof.net/pub/parrot/'
-        - name: 'emea.it-detektiven'
-          url: 'https://parrot.midvault.nu/'
-
-    FI:
+        - name: 'emea.belnet'
+          url: 'https://ftp.belnet.be/mirror/archive.parrotsec.org/parrot'
+        - name: 'emea.dotsrc'
+          url: 'https://mirrors.dotsrc.org/parrot'
+        - name: 'emea.telepoint'
+          url: 'https://mirror.telepoint.bg/parrot'
+    IT:
       mirrors:
-        - name: 'emea.clientvps'
-          url: 'https://mirror.clientvps.com/parrot/'
-
+        - name: 'emea.garr'
+          url: 'https://parrot.mirror.garr.it/parrot'
+        - name: 'geo.rfc2549.milan'
+          url: 'https://milan.mirror.rfc2549.network/direct/parrot'
+    GB:
+      mirrors:
+        - name: 'emea.vinehost'
+          url: 'https://mirror.vinehost.net/parrot'
+        - name: 'geo.rfc2549.london'
+          url: 'https://london.mirror.rfc2549.network/direct/parrot'
+    DE:
+      mirrors:
+        - name: 'emea.diyarciftci'
+          url: 'https://mirror.diyarciftci.xyz/parrot'
+        - name: 'emea.esslingen'
+          url: 'https://ftp-stud.hs-esslingen.de/pub/Mirrors/archive.parrotsec.org'
+        - name: 'emea.pyratelan'
+          url: 'https://mirror.pyratelan.org/parrot'
+        - name: 'geo.rfc2549.frankfurt'
+          url: 'https://frankfurt.mirror.rfc2549.network/direct/parrot'
+    NL:
+      mirrors:
+        - name: 'emea.vulnseeker'
+          url: 'https://mirror.vulnseeker.org/pub/parrot/'
+        - name: 'emea.nluug'
+          url: 'https://ftp.nluug.nl/os/Linux/distr/parrot'
+        - name: 'emea.lyrahosting'
+          url: 'https://mirror.lyrahosting.com/parrot'
+        - name: 'emea.koetsier'
+          url: 'https://mirror.koetsier.org/parrot/'
+    SE:
+      mirrors:
+        - name: 'emea.accum'
+          url: 'https://mirror.accum.se/mirror/parrotsec.org/parrot'
+        - name: 'emea.bahnhof'
+          url: 'https://mirror.bahnhof.net/pub/parrot/'
+        - name: 'emea.zyner'
+          url: 'https://mirror.zyner.org/parrot/'
     GR:
       mirrors:
         - name: 'emea.uoc'
           url: 'https://ftp.cc.uoc.gr/mirrors/linux/parrot'
-
     BE:
       mirrors:
         - name: 'emea.belnet'
-          url: 'https://ftp.belnet.be/pub/archive.parrotsec.org'
-
+          url: 'https://ftp.belnet.be/mirror/archive.parrotsec.org/parrot'
     ES:
       mirrors:
         - name: 'emea.osluz'
           url: 'https://matojo.unizar.es/parrot'
-
-    PT:
-      mirrors:
-        - name: 'emea.up'
-          url: 'https://mirrors.up.pt/parrot'
-
+        - name: 'emea.elhacker'
+          url: 'https://parrot.elhacker.net'
     BG:
       mirrors:
         - name: 'emea.telepoint'
           url: 'https://mirror.telepoint.bg/parrot'
-
     DK:
       mirrors:
         - name: 'emea.dotsrc'
           url: 'https://mirrors.dotsrc.org/parrot'
-
     EE:
       mirrors:
         - name: 'emea.cspacehosting'
           url: 'https://mirror.cspacehostings.com/parrotsec'
-
     RS:
       mirrors:
         - name: 'emea.sox'
           url: 'https://mirror1.sox.rs/parrot/'
-
     RU:
       mirrors:
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-        - name: 'apac.yandex'
+        - name: 'emea.yandex'
           url: 'https://mirror.yandex.ru/mirrors/parrot'
           blocked_countries: [ 'UA' ]
-        - name: 'apac.repository'
-          url: 'https://repository.su/parrot/'
-
-  AF:
-    DEFAULT:
-      mirrors:
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-
-        - name: 'geo.bunny'
-          url: 'https://bunny.deb.parrot.sh/parrot/'
-
-        - name: 'emea.esslingen'
-          url: 'https://ftp-stud.hs-esslingen.de/Mirrors/archive.parrotsec.org'
-
-        - name: 'emea.garr'
-          url: 'https://parrot.mirror.garr.it/parrot'
+        - name: 'emea.truenetwork'
+          url: 'https://mirror.truenetwork.ru/parrot'
 
   NA:
     DEFAULT:
       mirrors:
         - name: 'ncsa.mit'
           url: 'https://mirrors.mit.edu/parrot'
-
-        - name: 'ncsa.clarkson'
-          url: 'https://mirror.clarkson.edu/parrot'
-
         - name: 'ncsa.princeton'
           url: 'https://mirror.math.princeton.edu/pub/parrot/'
-
         - name: 'ncsa.osuosl'
           url: 'https://ftp.osuosl.org/pub/parrotos'
-
         - name: 'ncsa.berkeley'
           url: 'https://mirrors.ocf.berkeley.edu/parrot'
-
+    US:
+      mirrors:
+        - name: 'ncsa.mit'
+          url: 'https://mirrors.mit.edu/parrot'
+        - name: 'ncsa.clarkson'
+          url: 'https://mirror.clarkson.edu/parrot'
+        - name: 'ncsa.princeton'
+          url: 'https://mirror.math.princeton.edu/pub/parrot/'
+        - name: 'ncsa.osuosl'
+          url: 'https://ftp.osuosl.org/pub/parrotos'
+        - name: 'ncsa.berkeley'
+          url: 'https://mirrors.ocf.berkeley.edu/parrot'
         - name: 'ncsa.cicku'
           url: 'https://mirrors.cicku.me/parrot/'
 
   SA:
     DEFAULT:
       mirrors:
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-
-        - name: 'ncsa.usp'
-          url: 'http://sft.if.usp.br/parrot'
-
         - name: 'ncsa.cedia'
           url: 'https://mirror.cedia.org.ec/parrot'
-
         - name: 'ncsa.ueb'
           url: 'https://mirror.ueb.edu.ec/parrot'
-
+        - name: 'ncsa.usp'
+          url: 'http://sft.if.usp.br/parrot'
     EC:
       mirrors:
         - name: 'ncsa.cedia'
           url: 'https://mirror.cedia.org.ec/parrot'
-
         - name: 'ncsa.ueb'
           url: 'https://mirror.ueb.edu.ec/parrot'
-
     BR:
       mirrors:
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-
         - name: 'ncsa.usp'
           url: 'http://sft.if.usp.br/parrot'
 
   AS:
     DEFAULT:
       mirrors:
-        - name: 'geo.bunny'
-          url: 'https://bunny.deb.parrot.sh/parrot'
-        - name: 'geo.rfc2549'
-          url: 'https://mirror.rfc2549.network'
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-
-    AZ:
-      mirrors:
-        - name: 'emea.yerhosting'
-          url: 'https://mirror.yer.az/parrot/'
-        - name: 'emea.ourhost'
-          url: 'https://mirror.ourhost.az/parrot'
-
-    TW:
-      mirrors:
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-
-        - name: 'apac.nchc'
-          url: 'https://free.nchc.org.tw/parrot/'
-
-    JP:
-      mirrors:
-        - name: 'geo.bunny'
-          url: 'https://bunny.deb.parrot.sh/parrot'
-        - name: 'geo.rfc2549'
-          url: 'https://tokyo.mirror.rfc2549.network'
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-        - name: 'apac.sdcc'
-          url: 'https://mirror.hashy0917.net/parrot'
-
-    CN:
-      mirrors:
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-
-        - name: 'apac.ustc'
-          url: 'https://mirrors.ustc.edu.cn/parrot'
-
-        - name: 'apac.sjtug'
-          url: 'https://mirrors.sjtug.sjtu.edu.cn/parrot'
-
         - name: 'apac.tuna'
           url: 'https://mirrors.tuna.tsinghua.edu.cn/parrot'
-
-    TH:
-      mirrors:
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-
-        - name: 'apac.kku'
-          url: 'https://mirror.kku.ac.th/parrot'
-
-    ID:
-      mirrors:
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-
-        - name: 'apac.datautama'
-          url: 'https://kartolo.sby.datautama.net.id/parrot'
-
-    BD:
-      mirrors:
-        - name: 'apac.amberit'
-          url: 'http://mirror.amberit.com.bd/parrotsec'
-
-    IN:
-      mirrors:
-        - name: 'geo.bunny'
-          url: 'https://bunny.deb.parrot.sh/parrot'
-        - name: 'geo.rfc2549'
-          url: 'https://mumbai.mirror.rfc2549.network'
-        - name: 'geo.aliyun'
-          url: 'https://mirrors.aliyun.com/parrot/'
-
+        - name: 'apac.ustc'
+          url: 'https://mirrors.ustc.edu.cn/parrot'
+        - name: 'apac.nchc'
+          url: 'https://free.nchc.org.tw/parrot'
         - name: 'apac.nxtgen'
           url: 'https://mirrors.nxtgen.com/parrot-mirror'
-
+        - name: 'geo.aliyun'
+          url: 'https://mirrors.aliyun.com/parrot/'
+    TR:
+      mirrors:
+        - name: 'apac.verinomi'
+          url: 'https://mirror.verinomi.com/parrot/'
+        - name: 'geo.aliyun'
+          url: 'https://mirrors.aliyun.com/parrot/'
     IR:
       mirrors:
-        - name: 'geo.bunny'
-          url: 'https://bunny.deb.parrot.sh/parrot'
+        - name: 'apac.famaserver'
+          url: 'https://mirror.famaserver.com/parrot/'
         - name: 'geo.aliyun'
           url: 'https://mirrors.aliyun.com/parrot/'
-
-        - name: 'emea.garr'
-          url: 'https://parrot.mirror.garr.it/parrot'
-
+    AZ:
+      mirrors:
+        - name: 'apac.yerhosting'
+          url: 'https://mirror.yer.az/parrot/'
+        - name: 'apac.ourhost'
+          url: 'https://mirror.ourhost.az/parrot'
+        - name: 'geo.aliyun'
+          url: 'https://mirrors.aliyun.com/parrot/'
+    TW:
+      mirrors:
+        - name: 'apac.nchc'
+          url: 'https://free.nchc.org.tw/parrot'
+        - name: 'geo.aliyun'
+          url: 'https://mirrors.aliyun.com/parrot/'
+    JP:
+      mirrors:
+        - name: 'apac.sdcc'
+          url: 'https://mirror.hashy0917.net/parrot'
+        - name: 'geo.rfc2549.tokyo'
+          url: 'https://tokyo.mirror.rfc2549.network/direct/parrot'
+        - name: 'geo.aliyun'
+          url: 'https://mirrors.aliyun.com/parrot/'
     SG:
       mirrors:
-        - name: 'geo.bunny'
-          url: 'https://bunny.deb.parrot.sh/parrot'
-        - name: 'geo.rfc2549'
-          url: 'https://singapore.mirror.rfc2549.network'
+        - name: 'geo.rfc2549.singapore'
+          url: 'https://singapore.mirror.rfc2549.network/direct/parrot'
         - name: 'geo.aliyun'
           url: 'https://mirrors.aliyun.com/parrot/'
-
-        - name: 'apac.0x'
-          url: 'https://mirror.0x.sg/parrot'
-
-    KR:
+    CN:
       mirrors:
-        - name: 'apac.krmir'
-          url: 'https://mirror.krmir.org/parrot'
+        - name: 'apac.ustc'
+          url: 'https://mirrors.ustc.edu.cn/parrot'
+        - name: 'apac.tuna'
+          url: 'https://mirrors.tuna.tsinghua.edu.cn/parrot'
+        - name: 'apac.sjtug'
+          url: 'https://mirrors.sjtug.sjtu.edu.cn/parrot'
+        - name: 'geo.aliyun'
+          url: 'https://mirrors.aliyun.com/parrot/'
+    TH:
+      mirrors:
+        - name: 'apac.kku'
+          url: 'https://mirror.kku.ac.th/parrot'
+        - name: 'geo.aliyun'
+          url: 'https://mirrors.aliyun.com/parrot/'
+    ID:
+      mirrors:
+        - name: 'apac.datautama'
+          url: 'https://kartolo.sby.datautama.net.id/parrot'
+        - name: 'geo.aliyun'
+          url: 'https://mirrors.aliyun.com/parrot/'
+    IN:
+      mirrors:
+        - name: 'apac.nxtgen'
+          url: 'https://mirrors.nxtgen.com/parrot-mirror'
+        - name: 'geo.rfc2549.mumbai'
+          url: 'https://mumbai.mirror.rfc2549.network/direct/parrot'
+        - name: 'geo.aliyun'
+          url: 'https://mirrors.aliyun.com/parrot/'
 
   OC:
     DEFAULT:
       mirrors:
-        - name: 'geo.bunny'
-          url: 'https://bunny.deb.parrot.sh/parrot'
-        - name: 'geo.rfc2549'
-          url: 'https://singapore.mirror.rfc2549.network'
         - name: 'geo.aliyun'
           url: 'https://mirrors.aliyun.com/parrot/'
-
-        - name: 'apac.0x'
-          url: 'https://mirror.0x.sg/parrot'
-
         - name: 'apac.nchc'
           url: 'https://free.nchc.org.tw/parrot'
-    NZ:
+
+  AF:
+    DEFAULT:
       mirrors:
-        - name: 'apac.takeshi'
-          url: 'https://mirrors.takeshi.nz/parrot'
+        - name: 'geo.aliyun'
+          url: 'https://mirrors.aliyun.com/parrot/'
+        - name: 'emea.esslingen'
+          url: 'https://ftp-stud.hs-esslingen.de/pub/Mirrors/archive.parrotsec.org'
+        - name: 'emea.garr'
+          url: 'https://parrot.mirror.garr.it/parrot'
