@@ -82,12 +82,16 @@ func GetIP(r *http.Request) string {
 }
 
 func GetLocation(mmdb *geoip2.Reader, ip net.IP) (string, string) {
-	if mmdb == nil {
+	// without a geoip database (or a parseable source ip) we cannot
+	// geolocate the client: fall back to the DEFAULT mirrors instead
+	// of panicking on a nil lookup
+	if mmdb == nil || ip == nil {
 		return "DEFAULT", "DEFAULT"
 	}
 	mmrecord, err := mmdb.City(ip)
 	if err != nil {
 		log.Print(err)
+		return "DEFAULT", "DEFAULT"
 	}
 	return mmrecord.Continent.Code, mmrecord.Country.IsoCode
 }
