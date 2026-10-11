@@ -59,13 +59,12 @@ func Handler(mmdb *geoip2.Reader, state *atomic.Value) http.HandlerFunc {
 		// updates the mirror name it displays when the redirect Location
 		// ends with the exact same path tail as the queued URI.
 		requestPath := r.URL.EscapedPath()
-		file, err := Fileset.Lookup(strings.TrimSpace(r.URL.Path))
+		file, err := Fileset.Lookup(r.URL.Path)
 		if err != nil {
 			//w.WriteHeader(http.StatusNotFound)
 			http.Redirect(w, r, Root.Continents["MASTER"].Countries["MASTER"].Mirrors[rand.Intn(
 				len(Root.Continents["MASTER"].Countries["MASTER"].Mirrors),
 			)].Url+requestPath, http.StatusTemporaryRedirect)
-			fmt.Fprintf(w, "Directing to Master - Cannot find match")
 			return
 		}
 		ip := net.ParseIP(GetIP(r))
@@ -73,7 +72,6 @@ func Handler(mmdb *geoip2.Reader, state *atomic.Value) http.HandlerFunc {
 		target := Root.Lookup(file.Uri, file.Version, continent, country)
 		log.Printf("|%s|%s|%s|%s|%s|%s|%d\n", ip.String(), continent, country, target.Name, target.Url, file.Uri, file.Version)
 		http.Redirect(w, r, target.Url+requestPath, http.StatusTemporaryRedirect)
-		fmt.Fprintf(w, "file: %v\nsource: %s\nlocation: %s %s\n", file, ip, continent, country)
 	}
 }
 

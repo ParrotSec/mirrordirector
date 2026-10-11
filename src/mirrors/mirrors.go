@@ -2,7 +2,7 @@ package mirrors
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -51,7 +51,7 @@ func Init(config string) Root {
 			log.Fatalf("fetching %s error: %v", config, err)
 		}
 		defer resp.Body.Close()
-		mraw, err = ioutil.ReadAll(resp.Body)
+		mraw, err = io.ReadAll(resp.Body)
 		if err != nil {
 			log.Fatalf("reading %s response error: %v", config, err)
 		}
@@ -100,7 +100,7 @@ func (R *Root) Reload(config string) {
 			return
 		}
 		defer resp.Body.Close()
-		mraw, err = ioutil.ReadAll(resp.Body)
+		mraw, err = io.ReadAll(resp.Body)
 		if err != nil {
 			log.Printf("reading %s response error: %v", config, err)
 			return
@@ -202,7 +202,7 @@ func (M *Mirror) Scan() error {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("[WARNING] Unable to get index from %s: %v", M.Name, err)
 		M.Down = true

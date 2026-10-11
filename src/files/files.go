@@ -3,7 +3,7 @@ package files
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -73,7 +73,7 @@ func (F *Fileset) ScanMaster(R mirrors.Root) error {
 	defer resp.Body.Close()
 
 	// read body
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Unable to get index from master repo: %v\n", err)
 		return fmt.Errorf("unable to get index from master repo: %v", err)
@@ -121,7 +121,7 @@ func (F *Fileset) LoadCache(fname string) error {
 	if _, err := os.Stat(fname); os.IsNotExist(err) {
 		return fmt.Errorf("skipping load from cache: file does not exist")
 	}
-	f, err := ioutil.ReadFile(fname)
+	f, err := os.ReadFile(fname)
 	if err != nil {
 		log.Printf("Can't open cache file %v\n", err)
 		return fmt.Errorf("can't open cache file: %v", err)
