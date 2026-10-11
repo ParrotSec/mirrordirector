@@ -79,6 +79,16 @@ func (F *Fileset) ScanMaster(R mirrors.Root) error {
 		return fmt.Errorf("unable to get index from master repo: %v", err)
 	}
 
+	return F.updateFromIndex(body)
+}
+
+// updateFromIndex rebuilds the fileset from a freshly downloaded
+// master index: new files are stamped with the current repo version,
+// files already known keep the version of the index that first
+// published them (a mirror only needs to be as fresh as the files it
+// is asked to serve), and files that are no longer published are
+// dropped, so the fileset does not grow stale over time
+func (F *Fileset) updateFromIndex(body []byte) error {
 	// extract index version
 	if !strings.Contains(string(body), "!version") {
 		log.Printf("Got invalid index from master repo: version string not found\n")
@@ -94,11 +104,15 @@ func (F *Fileset) ScanMaster(R mirrors.Root) error {
 	}
 
 	// save files and versions in F.Files structure
+	files := make(map[string]File, len(lines))
 	for _, ii := range lines[1:] {
-		if _, ok := F.Files[ii]; !ok {
-			F.Files[ii] = File{Uri: ii, Version: version}
+		if f, ok := F.Files[ii]; ok {
+			files[ii] = f
+		} else {
+			files[ii] = File{Uri: ii, Version: version}
 		}
 	}
+	F.Files = files
 
 	return nil
 }
