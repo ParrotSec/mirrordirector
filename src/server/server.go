@@ -62,23 +62,31 @@ func Handler(mmdb *geoip2.Reader, Fileset *files.Fileset, Root *mirrors.Root) ht
 }
 
 func GetIP(r *http.Request) string {
-	forwarded := r.Header.Get("X-FORWARDED-FOR")
-	if forwarded != "" {
-		return forwarded
+	// X-Forwarded-For (or X-Real-Ip), when present, can be a
+	// comma-separated list: "client, proxy1, proxy2". The client is
+	// the leftmost entry, but entries can be missing ("unknown"),
+	// unparsable, or private addresses (clients behind corporate
+	// proxies), so walk the list and pick the first parsable,
+	// globally routable ip to geolocate.
+	// note: Header.Get is case-insensitive, it already matches all
+	// the X-Forwarded-For / X-Real-Ip casing variants
+	for _, header := range []string{"X-Forwarded-For", "X-Real-Ip"} {
+		if forwarded := r.Header.Get(header); forwarded != "" {
+			for _, hop := range strings.Split(forwarded, ",") {
+				ip := net.ParseIP(strings.TrimSpace(hop))
+				if ip == nil || !ip.IsGlobalUnicast() || ip.IsPrivate() {
+					continue
+				}
+				return ip.String()
+			}
+		}
 	}
-	forwarded = r.Header.Get("X-Forwarded-For")
-	if forwarded != "" {
-		return forwarded
+	// RemoteAddr is ip:port ([v6]:port for ipv6): extract the ip in
+	// an ipv6-safe way
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		return host
 	}
-	forwarded = r.Header.Get("X-REAL-IP")
-	if forwarded != "" {
-		return forwarded
-	}
-	forwarded = r.Header.Get("X-Real-Ip")
-	if forwarded != "" {
-		return forwarded
-	}
-	return strings.Split(r.RemoteAddr, ":")[0]
+	return r.RemoteAddr
 }
 
 func GetLocation(mmdb *geoip2.Reader, ip net.IP) (string, string) {
