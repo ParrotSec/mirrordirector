@@ -64,6 +64,25 @@ func Init(config string) Root {
 	return R
 }
 
+// DeepCopy returns an independent copy of the mirror tree: the maps
+// and the Mirrors slices are duplicated, so the copy can be mutated
+// (e.g. by Reload or Scan) without affecting the original. This
+// allows the scanner to work on a private copy and publish it
+// copy-on-write, with no locking on the read path.
+func (R Root) DeepCopy() Root {
+	out := Root{Continents: make(map[string]Continent, len(R.Continents))}
+	for ctName, ct := range R.Continents {
+		newCt := Continent{Countries: make(map[string]Country, len(ct.Countries))}
+		for coName, co := range ct.Countries {
+			newCo := Country{Mirrors: make([]Mirror, len(co.Mirrors))}
+			copy(newCo.Mirrors, co.Mirrors)
+			newCt.Countries[coName] = newCo
+		}
+		out.Continents[ctName] = newCt
+	}
+	return out
+}
+
 func (R *Root) Reload(config string) {
 	var mraw []byte
 	var err error
@@ -88,11 +107,16 @@ func (R *Root) Reload(config string) {
 		}
 	}
 
-	err = yaml.Unmarshal(mraw, R)
+	// parse into a fresh tree and swap it in only on success: a
+	// failed reload keeps the previous mirror list, and removed
+	// mirrors don't linger from a merge with the old maps
+	var newR Root
+	err = yaml.Unmarshal(mraw, &newR)
 	if err != nil {
 		log.Printf("parsing %s error: %v", config, err)
 		return
 	}
+	*R = newR
 }
 
 func (R Root) Show() {

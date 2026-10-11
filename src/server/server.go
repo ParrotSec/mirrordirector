@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync/atomic"
 
 	"github.com/parrotsec/mirrordirector/files"
 	"github.com/parrotsec/mirrordirector/mirrors"
@@ -14,14 +15,24 @@ import (
 	"github.com/oschwald/geoip2-golang"
 )
 
-func Serve(url string, Fileset *files.Fileset, Root *mirrors.Root) {
+// State is an immutable snapshot of the mirror tree and the known
+// fileset. The scanner goroutine publishes a fresh State after every
+// scan cycle by atomically storing it (copy-on-write): snapshots are
+// never mutated once published, so handlers can read them without
+// any locking.
+type State struct {
+	Root    mirrors.Root
+	Fileset files.Fileset
+}
+
+func Serve(url string, state *atomic.Value) {
 	mmdb, err := geoip2.Open("/var/lib/GeoIP/GeoLite2-City.mmdb")
 	if err != nil {
 		log.Panic(err)
 	}
 	defer mmdb.Close()
 
-	http.HandleFunc("/", Handler(mmdb, Fileset, Root))
+	http.HandleFunc("/", Handler(mmdb, state))
 
 	err = http.ListenAndServe(url, nil)
 	if err != nil {
@@ -29,8 +40,13 @@ func Serve(url string, Fileset *files.Fileset, Root *mirrors.Root) {
 	}
 }
 
-func Handler(mmdb *geoip2.Reader, Fileset *files.Fileset, Root *mirrors.Root) http.HandlerFunc {
+func Handler(mmdb *geoip2.Reader, state *atomic.Value) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// load the current immutable snapshot: the scanner never
+		// mutates published snapshots (copy-on-write), so this is
+		// safe to read without locks
+		s := state.Load().(State)
+		Fileset, Root := s.Fileset, s.Root
 		if r.Method != "GET" && r.Method != "HEAD" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "400 bad request")

@@ -32,14 +32,22 @@ func Init(R mirrors.Root, cache string) Fileset {
 	return F
 }
 
-func (F *Fileset) UpdateConfig(config string, R *mirrors.Root) {
-	R.Reload(config)
-}
-
 func (F Fileset) Show() {
 	for _, ii := range F.Files {
 		fmt.Printf("%s %d\n", ii.Uri, ii.Version)
 	}
+}
+
+// DeepCopy returns an independent copy of the fileset map, so the
+// copy can be mutated (e.g. by ScanMaster) without affecting the
+// original. This allows the scanner to work on a private copy and
+// publish it copy-on-write, with no locking on the read path.
+func (F Fileset) DeepCopy() Fileset {
+	out := Fileset{Files: make(map[string]File, len(F.Files))}
+	for k, v := range F.Files {
+		out.Files[k] = v
+	}
+	return out
 }
 
 func (f Fileset) Lookup(file string) (File, error) {

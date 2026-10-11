@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sync/atomic"
 	"time"
 
 	"github.com/parrotsec/mirrordirector/files"
@@ -54,17 +55,32 @@ func main() {
 
 	Fileset := files.Init(Root, cache)
 
-	go func(F *files.Fileset, R *mirrors.Root, config string) {
+	// latest scan results, published copy-on-write: handlers only
+	// ever read the snapshots stored here, never the working copies
+	// the scanner goroutine mutates, so no locking is needed
+	state := &atomic.Value{}
+	state.Store(server.State{Root: Root, Fileset: Fileset})
+
+	go func() {
 		for {
-			F.UpdateConfig(config, R)
-			F.ScanMaster(*R)
-			F.SaveCache(cache)
-			R.Scan()
-			R.Show()
+			// scan private copies, then publish them atomically;
+			// handlers keep using the previous snapshot meanwhile.
+			// Reload swaps in the freshly fetched mirror list only on
+			// success, so a failed reload rescans and republishes
+			// the previous one
+			newRoot := Root.DeepCopy()
+			newFiles := Fileset.DeepCopy()
+			newRoot.Reload(config)
+			newFiles.ScanMaster(newRoot)
+			newFiles.SaveCache(cache)
+			newRoot.Scan()
+			newRoot.Show()
+			Root, Fileset = newRoot, newFiles
+			state.Store(server.State{Root: newRoot, Fileset: newFiles})
 			time.Sleep(time.Minute * 20)
 		}
-	}(&Fileset, &Root, config)
+	}()
 
 	fmt.Println("starting server")
-	server.Serve(":8080", &Fileset, &Root)
+	server.Serve(":8080", state)
 }
