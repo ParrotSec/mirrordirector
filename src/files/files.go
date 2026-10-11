@@ -124,15 +124,19 @@ func (F *Fileset) LoadCache(fname string) error {
 func (F Fileset) SaveCache(fname string) error {
 	f, err := os.Create(fname)
 	if err != nil {
-		log.Fatalf("Unable to create cache file: %v\n", err)
+		log.Printf("Unable to create cache file %s: %v\n", fname, err)
 		return fmt.Errorf("unable to create cache file: %v", err)
 	}
+	defer f.Close()
+
 	w := bufio.NewWriter(f)
 	for _, ii := range F.Files {
 		w.WriteString(fmt.Sprint(ii.Version) + "|" + ii.Uri + "\n")
 	}
-	w.Flush()
-	defer f.Close()
+	if err := w.Flush(); err != nil {
+		log.Printf("Unable to write cache file %s: %v\n", fname, err)
+		return fmt.Errorf("unable to write cache file: %v", err)
+	}
 
 	return nil
 }
