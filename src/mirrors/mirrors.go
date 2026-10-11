@@ -129,56 +129,48 @@ func (R Root) Show() {
 	}
 }
 
+// pickHealthy returns a randomly chosen mirror that is up and fresh
+// enough (version >= the requested file's version). Mirrors are
+// tried in random order without replacement, so a list is given up
+// only when ALL of its mirrors are down or stale. The bool is false
+// when no mirror is usable (or the list is empty).
+//
+// TODO: find a way to weight mirror redirection based on available
+//       bandwidth
+func pickHealthy(mirrors []Mirror, version uint64) (Mirror, bool) {
+	for _, i := range rand.Perm(len(mirrors)) {
+		if m := mirrors[i]; !m.Down && m.Version >= version {
+			return m, true
+		}
+	}
+	return Mirror{}, false
+}
+
 func (R Root) Lookup(file string, version uint64, continent string, country string) Mirror {
 	if ct, ctok := R.Continents[continent]; ctok {
+		// prefer a mirror in the client's own country
 		if co, cook := ct.Countries[country]; cook {
-			// if country has a mirror
-			// TODO: create a slice and append all the mirrors
-			//       from the country and all the mirrors from
-			//       ct.Countries["DEFAULT"], and randomly pick one
-			//
-			// TODO: find a way to weight mirror redirection
-			//       based on available bandwidth
-			mirror := co.Mirrors[rand.Intn(len(co.Mirrors))]
-			if !mirror.Down {
-				if mirror.Version >= version {
-					return mirror
-				}
+			if mirror, ok := pickHealthy(co.Mirrors, version); ok {
+				return mirror
 			}
 		}
+		// fall back to the continent DEFAULT mirrors
 		if co, cook := ct.Countries["DEFAULT"]; cook {
-			// if continent has a DEFAULT set of mirrors
-			mirror := co.Mirrors[rand.Intn(len(co.Mirrors))]
-			if !mirror.Down {
-				if mirror.Version >= version {
-					return mirror
-				}
+			if mirror, ok := pickHealthy(co.Mirrors, version); ok {
+				return mirror
 			}
 		}
-		// TODO: chech whether it can be removed
-		//// if country has no mirrors and continent has no DEFAULT mirrors
-		//for _, co := range ct.Countries {
-		//	// pick a random mirror casually from an available country
-		//	mirror := co.Mirrors[rand.Intn(len(co.Mirrors))]
-		//	if !mirror.Down {
-		//		if mirror.Version >= version {
-		//			return mirror
-		//		}
-		//	}
-		//}
 	}
-	// if there are no mirrors in the continent
+	// fall back to the global DEFAULT mirrors
 	if ct, ctok := R.Continents["DEFAULT"]; ctok {
 		if co, cook := ct.Countries["DEFAULT"]; cook {
-			mirror := co.Mirrors[rand.Intn(len(co.Mirrors))]
-			if !mirror.Down {
-				if mirror.Version >= version {
-					return mirror
-				}
+			if mirror, ok := pickHealthy(co.Mirrors, version); ok {
+				return mirror
 			}
 		}
 	}
-	// if nothing is available
+	// last resort: the master infrastructure, always served
+	// regardless of down/version state
 	return R.Continents["MASTER"].Countries["MASTER"].Mirrors[rand.Intn(
 		len(R.Continents["MASTER"].Countries["MASTER"].Mirrors),
 	)]
