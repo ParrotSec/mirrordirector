@@ -52,13 +52,17 @@ func Handler(mmdb *geoip2.Reader, state *atomic.Value) http.HandlerFunc {
 			fmt.Fprintf(w, "400 bad request")
 			return
 		}
-		// The redirect target must keep the request path in its original
-		// escaped form (r.URL.EscapedPath), not the decoded r.URL.Path:
-		// apt percent-encodes characters like '+' in the URIs it queues
-		// (e.g. foo_1.0+dfsg-1 becomes foo_1.0%2bdfsg-1), and it only
-		// updates the mirror name it displays when the redirect Location
-		// ends with the exact same path tail as the queued URI.
-		requestPath := r.URL.EscapedPath()
+		// The redirect target must byte-match the URI apt queued,
+		// or apt won't update the mirror name it displays: apt
+		// percent-encodes '%', '+', '~', ' ', control and non-ASCII
+		// bytes as lowercase %xx (Acquire::URIEncode defaults to
+		// "+~ "). We rebuild that canonical encoding from the decoded
+		// path instead of trusting the request's raw encoding,
+		// because proxies in between (the CDN in front of the
+		// director) may normalize percent-encoding before forwarding:
+		// CDNs commonly decode %7e back to '~', an RFC 3986
+		// unreserved character.
+		requestPath := aptEscapePath(r.URL.Path)
 		file, err := Fileset.Lookup(r.URL.Path)
 		if err != nil {
 			//w.WriteHeader(http.StatusNotFound)
@@ -73,6 +77,28 @@ func Handler(mmdb *geoip2.Reader, state *atomic.Value) http.HandlerFunc {
 		log.Printf("|%s|%s|%s|%s|%s|%s|%d\n", ip.String(), continent, country, target.Name, target.Url, file.Uri, file.Version)
 		http.Redirect(w, r, target.Url+requestPath, http.StatusTemporaryRedirect)
 	}
+}
+
+// aptEscapePath re-encodes a decoded URL path the way apt encodes
+// the URIs it queues (see Acquire::URIEncode, default "+~ "): '%',
+// '+', '~', ' ', control and non-ASCII bytes become lowercase %xx,
+// everything else is left untouched. The result byte-matches apt's
+// internal URI no matter how the request was encoded on the wire.
+func aptEscapePath(p string) string {
+	const hex = "0123456789abcdef"
+	var b strings.Builder
+	b.Grow(len(p) + 8)
+	for i := 0; i < len(p); i++ {
+		c := p[i]
+		if c == '%' || c == '+' || c == '~' || c == ' ' || c < 0x20 || c >= 0x7f {
+			b.WriteByte('%')
+			b.WriteByte(hex[c>>4])
+			b.WriteByte(hex[c&0x0f])
+		} else {
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
 }
 
 func GetIP(r *http.Request) string {

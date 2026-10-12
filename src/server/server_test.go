@@ -68,6 +68,72 @@ func TestGetIP(t *testing.T) {
 	}
 }
 
+func TestAptEscapePath(t *testing.T) {
+	cases := map[string]string{
+		"/pool/f/fake/fake_1.0+dfsg-1_amd64.deb":  "/pool/f/fake/fake_1.0%2bdfsg-1_amd64.deb",
+		"/pool/f/fake/fake_2.0~rc1-1_amd64.deb":   "/pool/f/fake/fake_2.0%7erc1-1_amd64.deb",
+		"/pool/f/fake/fake_3.0~bpo13+1_amd64.deb": "/pool/f/fake/fake_3.0%7ebpo13%2b1_amd64.deb",
+		"/pool/f/fake/a b.deb":                    "/pool/f/fake/a%20b.deb",
+		"/pool/f/fake/a%b.deb":                    "/pool/f/fake/a%25b.deb",
+		"/pool/f/fake/plain_1.2.3-4_amd64.deb":    "/pool/f/fake/plain_1.2.3-4_amd64.deb",
+		"/pool/f/fake/über.deb":                   "/pool/f/fake/%c3%bcber.deb",
+	}
+	for in, want := range cases {
+		if got := aptEscapePath(in); got != want {
+			t.Errorf("aptEscapePath(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+// The redirect Location must always carry the request path in apt's
+// canonical encoding (lowercase %xx for '%', '+', '~', ' ', control
+// and non-ASCII bytes), no matter how the request itself was
+// encoded on the wire - CDNs between apt and the director may
+// normalize percent-encoding (e.g. decoding %7e back to '~').
+func TestRedirectTargetEncoding(t *testing.T) {
+	log.SetOutput(io.Discard)
+	defer log.SetOutput(os.Stderr)
+
+	root := mirrors.Root{Continents: map[string]mirrors.Continent{
+		"MASTER": {Countries: map[string]mirrors.Country{
+			"MASTER": {Mirrors: []mirrors.Mirror{{Name: "master", Url: "http://master", Version: 9999}}},
+		}},
+		"DEFAULT": {Countries: map[string]mirrors.Country{
+			"DEFAULT": {Mirrors: []mirrors.Mirror{{Name: "m", Url: "http://m", Version: 9999}}},
+		}},
+	}}
+	fset := files.Fileset{Files: map[string]files.File{
+		"/pool/f/fake/fake_1.0+dfsg-1_amd64.deb": {Uri: "/pool/f/fake/fake_1.0+dfsg-1_amd64.deb", Version: 1},
+		"/pool/f/fake/fake_2.0~rc1-1_amd64.deb":  {Uri: "/pool/f/fake/fake_2.0~rc1-1_amd64.deb", Version: 1},
+	}}
+	state := &atomic.Value{}
+	state.Store(State{Root: root, Fileset: fset})
+	h := Handler(nil, state)
+
+	cases := []struct {
+		name, target, wantLocation string
+	}{
+		// the form apt uses on the wire
+		{"plus pct", "http://x/pool/f/fake/fake_1.0%2bdfsg-1_amd64.deb", "http://m/pool/f/fake/fake_1.0%2bdfsg-1_amd64.deb"},
+		// the form a request takes after a CDN decoded it
+		{"plus literal", "http://x/pool/f/fake/fake_1.0+dfsg-1_amd64.deb", "http://m/pool/f/fake/fake_1.0%2bdfsg-1_amd64.deb"},
+		{"tilde pct", "http://x/pool/f/fake/fake_2.0%7erc1-1_amd64.deb", "http://m/pool/f/fake/fake_2.0%7erc1-1_amd64.deb"},
+		{"tilde literal", "http://x/pool/f/fake/fake_2.0~rc1-1_amd64.deb", "http://m/pool/f/fake/fake_2.0%7erc1-1_amd64.deb"},
+		// unknown file: master fallback must be encoded too
+		{"fallback tilde", "http://x/pool/f/fake/other_1.0~bpo-1_amd64.deb", "http://master/pool/f/fake/other_1.0%7ebpo-1_amd64.deb"},
+	}
+	for _, c := range cases {
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest("GET", c.target, nil))
+		if w.Code != http.StatusTemporaryRedirect {
+			t.Errorf("%s: status = %d, want 307", c.name, w.Code)
+		}
+		if loc := w.Header().Get("Location"); loc != c.wantLocation {
+			t.Errorf("%s: Location = %q, want %q", c.name, loc, c.wantLocation)
+		}
+	}
+}
+
 // The scanner goroutine publishes fresh State snapshots while
 // handlers serve requests. This simulates that pattern so the race
 // detector (go test -race) can verify that published snapshots are
